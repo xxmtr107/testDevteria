@@ -17,8 +17,12 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -31,27 +35,39 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.authorizeHttpRequests(request ->
-                request.requestMatchers(HttpMethod.POST,PUBLIC_ENDPOINTS).permitAll()
-//                        .requestMatchers(HttpMethod.GET,"/users").hasRole(Role.ADMIN.name())
-//                        .requestMatchers(HttpMethod.GET,"/users/").hasAuthority("ROLE_ADMIN")
-
-                        .anyRequest().authenticated());
-
-        httpSecurity.oauth2ResourceServer(oauth2 ->
-                oauth2.jwt(jwtConfigurer ->
-                        jwtConfigurer.decoder(jwtDecoder())
-                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
-        );
-
-        httpSecurity.csrf(AbstractHttpConfigurer::disable);
+        httpSecurity
+                .csrf(AbstractHttpConfigurer::disable) // tắt CSRF
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // bật CORS
+                .authorizeHttpRequests(request ->
+                        request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+                                .anyRequest().authenticated()
+                )
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2.jwt(jwtConfigurer ->
+                                        jwtConfigurer.decoder(jwtDecoder())
+                                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                                .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
+                );
 
         return httpSecurity.build();
     }
 
     @Bean
-    JwtAuthenticationConverter jwtAuthenticationConverter(){
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        // Cho phép origin của bạn (có thể thay bằng "*")
+        config.setAllowedOrigins(List.of("http://127.0.0.1:5500", "http://localhost:5500"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true); // nếu bạn cần cookie/token
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+
+    @Bean
+    JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
         jwtGrantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
@@ -61,7 +77,7 @@ public class SecurityConfig {
 
     @Bean
     JwtDecoder jwtDecoder() {
-        SecretKeySpec secretKey = new SecretKeySpec(SIGN_KEY.getBytes(),"HmacSHA512");
+        SecretKeySpec secretKey = new SecretKeySpec(SIGN_KEY.getBytes(), "HmacSHA512");
 
         return NimbusJwtDecoder
                 .withSecretKey(secretKey)
@@ -73,5 +89,4 @@ public class SecurityConfig {
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(10);
     }
-
 }
