@@ -18,8 +18,8 @@ public class UserCreationRequest {
 
     @Size(min = 8, message = "PASSWORD_INVALID")
     String password;
-    String firstName ;
-    String lastName ;
+    String firstName;
+    String lastName;
     LocalDate dob;
 
 

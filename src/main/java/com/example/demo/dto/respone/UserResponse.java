@@ -17,8 +17,8 @@ import java.util.Set;
 public class UserResponse {
     long id;
     String username;
-    String firstName ;
-    String lastName ;
+    String firstName;
+    String lastName;
     LocalDate dob;
     Set<String> roles;
 }
