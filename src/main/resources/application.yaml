@@ -1,0 +1,15 @@
+spring:
+    datasource:
+        url: "jdbc:mysql://trolley.proxy.rlwy.net:46214/railway"
+        username: "root"
+        password: "aiAgmQKnmcZZPaKraeFqfOxEBluyFvND"
+    jpa:
+        hibernate:
+          ddl-auto: update
+        show-sql: true
+        properties:
+            hibernate:
+                format_sql: true
+
+jwt:
+  signerKey: "QnH/fRs+uwNd2FoCyreG4O1xAd0v3/lEX6pTTRTQzHea9YtyVYrpuTOj31XK9Y2D"
